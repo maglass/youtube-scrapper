@@ -23,7 +23,9 @@ class DBClient extends Client{
   queryPromise(sql, params = []) {
     return new Promise((resolve, reject) => {
       this.query(sql, params, (err, res) => {
-        if (err) reject(err)
+        if (err) {
+          reject(err)
+        }
         resolve(res)
       })
     })

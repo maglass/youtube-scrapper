@@ -18,11 +18,12 @@ class YoutubeAPI {
 
 
 
-  async getVideoListFromChannel(channelId) {
+  async getVideoListFromChannel(channelId, pageToken) {
     const qs = queryString.stringify({
       key: YOUTUBE_API_DATA_V3,
       part: 'id, snippet',
-      channelId: channelId
+      channelId: channelId,
+      pageToken: pageToken || null,
     })
 
     try {
@@ -38,13 +39,32 @@ class YoutubeAPI {
   async getChannel(channelId) {
     const qs = queryString.stringify({
       key: YOUTUBE_API_DATA_V3,
-      part: 'id, snippet, brandingSettings, contentDetails, invideoPromotion, statistics, topicDetails',
+      part: 'id, snippet, brandingSettings, invideoPromotion, statistics',
       id: channelId
     })
 
     try {
       const { body } = await this.requestToYoutube(`${YOUTUBE_API_V3_CHANNELS}?${qs}`)
-      const result = JSON.parse(body)
+      const { items } = JSON.parse(body)
+      
+      const result = {}
+      if (items && items[0]) {
+        const { id, snippet, statistics, brandingSettings } = items[0]
+
+        result.channelId = id
+        result.status = 'IDLE'
+        result.title = brandingSettings.channel.title
+        result.description = brandingSettings.channel.description
+        result.keywords = brandingSettings.channel.keywords
+        result.country = brandingSettings.channel.country
+
+        result.publishedAt = snippet.publishedAt
+
+        result.viewCount = statistics.viewCount
+        result.commentCount = statistics.commentCount
+        result.subscriberCount = statistics.subscriberCount
+        result.videoCount = statistics.videoCount
+      }
       return result
     } catch (e) {
       console.log(e)
